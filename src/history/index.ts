@@ -31,9 +31,10 @@ const states = shallowReactive([
 
 export let levelDataHandle: FileSystemFileHandle | undefined
 
-addEventListener('beforeunload', (event) => {
-    if (isStateDirty.value) event.preventDefault()
-})
+// Preview mode: no unsaved changes warning needed
+// addEventListener('beforeunload', (event) => {
+//     if (isStateDirty.value) event.preventDefault()
+// })
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const current = computed(() => states[index.value]!)

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import LevelEditor from './editor/LevelEditor.vue'
-import LevelEditorSidebar from './editor/LevelEditorSidebar.vue'
-import { currentSidebar } from './editor/sidebars'
 import ModalManager from './modals/ModalManager.vue'
-import LevelPreview from './preview/LevelPreview.vue'
-import { screenSm, screenWidth } from './screen'
 import { settings } from './settings'
+import { hasUrlParams, loadFromUrl } from './urlLoader'
 
+// Original project info (for info modal)
+const ORIGINAL_REPO = 'https://github.com/NonSpicyBurrito/sonolus-pjsekai-editor'
+
+// Set locale
 watch(
     () => settings.locale,
     () => {
@@ -16,159 +17,127 @@ watch(
     { immediate: true },
 )
 
-const sidebar = useTemplateRef('sidebar')
-watch(sidebar, () => {
-    currentSidebar.value = sidebar.value
-})
+// Loading state
+const isLoading = ref(true)
+const loadingMessage = ref('Initializing...')
+const loadError = ref<string | null>(null)
 
-const previewPosition = computed(() =>
-    settings.previewPosition !== 'auto'
-        ? settings.previewPosition
-        : screenSm.value
-          ? 'left'
-          : 'top',
-)
+// Info modal state
+const showInfoModal = ref(false)
 
-type Panel = 'preview' | 'sidebar'
-
-const isDragging = ref<Panel>()
-const wasDragging = ref(false)
-
-const onStartDragging = (panel: Panel) => {
-    isDragging.value = panel
-    wasDragging.value = false
-}
-
-const onDrag = (event: PointerEvent) => {
-    if (!isDragging.value) return
-    wasDragging.value = true
-
-    switch (isDragging.value) {
-        case 'preview':
-            settings.showPreview = true
-            if (previewPosition.value === 'left') {
-                settings.previewWidth = event.clientX
-            } else {
-                settings.previewHeight = event.clientY
+// Auto-load from URL on mount
+onMounted(async () => {
+    if (hasUrlParams()) {
+        try {
+            const success = await loadFromUrl((stage) => {
+                loadingMessage.value = stage
+            })
+            if (!success) {
+                loadError.value = 'Failed to load chart from URL'
             }
-            break
-        case 'sidebar':
-            settings.showSidebar = true
-            settings.sidebarWidth = screenWidth.value - event.clientX
-            break
+        } catch (error) {
+            loadError.value = error instanceof Error ? error.message : 'Unknown error'
+        }
     }
-}
-
-const onStopDragging = () => {
-    isDragging.value = undefined
-}
-
-const onToggle = (panel: Panel) => {
-    if (wasDragging.value) return
-
-    switch (panel) {
-        case 'preview':
-            settings.showPreview = !settings.showPreview
-            break
-        case 'sidebar':
-            settings.showSidebar = !settings.showSidebar
-            break
-    }
-}
-
-const onFocus = (event: FocusEvent) => {
-    ;(event.currentTarget as HTMLElement | null)?.blur()
-}
+    isLoading.value = false
+})
 </script>
 
 <template>
+    <!-- Loading overlay -->
     <div
-        class="flex h-screen w-screen overflow-hidden"
-        @pointermove="onDrag"
-        @pointerup="onStopDragging"
+        v-if="isLoading"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg"
     >
-        <div
-            class="flex flex-grow overflow-hidden"
-            :class="previewPosition === 'left' ? 'flex-row' : 'flex-col'"
-        >
-            <div
-                class="relative z-10 bg-[#5b5c7c]"
-                :class="
-                    previewPosition === 'left'
-                        ? { 'min-w-[20%] max-w-[40%]': settings.showPreview }
-                        : { 'max-h-[40%] min-h-[20%]': settings.showPreview }
-                "
-                :style="
-                    previewPosition === 'left'
-                        ? { width: (settings.showPreview ? settings.previewWidth : 0) + 'px' }
-                        : { height: (settings.showPreview ? settings.previewHeight : 0) + 'px' }
-                "
-            >
-                <LevelPreview v-if="settings.showPreview" />
+        <div class="text-2xl font-bold text-button mb-4">Chart Preview</div>
+        <div class="text-button/70">{{ loadingMessage }}</div>
+    </div>
 
-                <button
-                    class="absolute flex items-center justify-center bg-button shadow-md transition-colors hover:shadow-accent active:bg-accent active:fill-button"
-                    :class="
-                        previewPosition === 'left'
-                            ? 'left-full top-1/2 h-16 w-4 -translate-y-1/2 cursor-col-resize rounded-r-full'
-                            : 'left-1/2 top-full h-4 w-16 -translate-x-1/2 cursor-row-resize rounded-b-full'
-                    "
-                    @click="onToggle('preview')"
-                    @pointerdown="onStartDragging('preview')"
-                    @focus="onFocus"
-                >
-                    <svg
-                        v-if="previewPosition === 'left'"
-                        class="size-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 192 512"
-                    >
-                        <!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc. -->
-                        <path
-                            d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 448c0 17.7 14.3 32 32 32s32-14.3 32-32L64 64zm128 0c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 384c0 17.7 14.3 32 32 32s32-14.3 32-32l0-384z"
-                        />
-                    </svg>
-                    <svg
-                        v-else
-                        class="size-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 448 512"
-                    >
-                        <!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc. -->
-                        <path
-                            d="M32 288c-17.7 0-32 14.3-32 32s14.3 32 32 32l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 288zm0-128c-17.7 0-32 14.3-32 32s14.3 32 32 32l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 160z"
-                        />
-                    </svg>
-                </button>
-            </div>
-
-            <div class="flex-grow">
-                <LevelEditor />
-            </div>
+    <!-- Error state -->
+    <div
+        v-else-if="loadError"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg"
+    >
+        <div class="text-2xl font-bold text-red-400 mb-4">Error</div>
+        <div class="text-button/70">{{ loadError }}</div>
+        <div class="mt-4 text-button/50 text-sm">
+            Please check the URL parameters and try again
         </div>
+    </div>
 
-        <div
-            v-if="screenSm"
-            ref="sidebar"
-            class="relative z-10 bg-modal"
-            :class="{ 'min-w-[20%] max-w-[40%]': settings.showSidebar }"
-            :style="{ width: (settings.showSidebar ? settings.sidebarWidth : 0) + 'px' }"
+    <!-- Main editor (full screen, no sidebar/preview panels) -->
+    <div v-else class="flex h-screen w-screen overflow-hidden relative">
+        <div class="flex-grow">
+            <LevelEditor />
+        </div>
+        
+        <!-- Info button -->
+        <button
+            class="absolute bottom-2 left-2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-button/80 hover:bg-button text-bg transition-colors shadow-lg"
+            @click="showInfoModal = true"
+            title="关于"
         >
-            <LevelEditorSidebar v-if="settings.showSidebar" />
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </button>
+    </div>
 
-            <button
-                class="absolute -left-4 top-1/2 flex h-16 w-4 -translate-y-1/2 cursor-col-resize items-center justify-center rounded-l-full bg-button shadow-md transition-colors hover:shadow-accent active:bg-accent active:fill-button"
-                @click="onToggle('sidebar')"
-                @pointerdown="onStartDragging('sidebar')"
-                @focus="onFocus"
-            >
-                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512">
-                    <!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc. -->
-                    <path
-                        d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 448c0 17.7 14.3 32 32 32s32-14.3 32-32L64 64zm128 0c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 384c0 17.7 14.3 32 32 32s32-14.3 32-32l0-384z"
-                    />
-                </svg>
-            </button>
+    <!-- Info Modal -->
+    <div
+        v-if="showInfoModal"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60"
+        @click.self="showInfoModal = false"
+    >
+        <div class="bg-[#2a2a3e] rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="p-4 border-b border-white/20">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-white">关于 Chart Preview</h2>
+                    <button
+                        class="text-white/60 hover:text-white"
+                        @click="showInfoModal = false"
+                    >
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4 text-white/80 text-sm space-y-4">
+                <p>
+                    本项目基于 
+                    <a 
+                        :href="ORIGINAL_REPO" 
+                        target="_blank" 
+                        class="text-accent underline hover:text-accent/80"
+                    >
+                        sonolus-pjsekai-editor
+                    </a> 
+                    修改而来，移除了编辑功能，仅保留谱面预览功能。
+                </p>
+                
+                <div class="bg-black/60 text-white/90 rounded p-3 text-xs font-mono whitespace-pre-wrap overflow-x-auto">MIT License
+
+Copyright (c) 2025 NonSpicyBurrito
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</div>
+            </div>
         </div>
     </div>
 

@@ -118,47 +118,15 @@ const settingsProperties = {
                 .Encode((values) => values),
             {
                 default: [
-                    ['utilities', 'reset', 'save', 'open'],
-                    ['bgm', 'speedUp', 'speedDown', 'stop', 'play'],
-                    [
-                        'redo',
-                        'undo',
-                        'paste',
-                        'copy',
-                        'cut',
-                        'flip',
-                        'brush',
-                        'eraser',
-                        'deselect',
-                        'select',
-                    ],
-                    ['note3', 'note2', 'note1', 'note0', 'note'],
-                    ['slide4', 'slide3', 'slide2', 'slide1', 'slide0', 'slide'],
-                    ['timeScale', 'bpm'],
-                    ['groupPrev', 'groupNext', 'groupAll'],
-                    [
-                        'scrollLeft',
-                        'scrollRight',
-                        'jumpUp',
-                        'scrollPageUp',
-                        'scrollUp',
-                        'scrollDown',
-                        'scrollPageDown',
-                        'jumpDown',
-                    ],
-                    [
-                        'snapping',
-                        'divisionCustom',
-                        'division16',
-                        'division12',
-                        'division8',
-                        'division6',
-                        'division4',
-                        'division3',
-                        'division2',
-                        'division1',
-                    ],
-                    ['zoomXIn', 'zoomXOut', 'zoomYIn', 'zoomYOut'],
+                    // Preview mode: each button visible (not folded)
+                    ['play'],
+                    ['stop'],
+                    ['speedUp'],
+                    ['speedDown'],
+                    ['jumpDown'],
+                    ['jumpUp'],
+                    ['zoomYIn'],
+                    ['zoomYOut'],
                 ] satisfies CommandName[][],
             },
         ),
@@ -317,5 +285,5 @@ export const settings = Object.defineProperties(
         }),
     ),
 ) as {
-    [K in keyof typeof settingsProperties]: StaticDecode<(typeof settingsProperties)[K]>
-}
+        [K in keyof typeof settingsProperties]: StaticDecode<(typeof settingsProperties)[K]>
+    }

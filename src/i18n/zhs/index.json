@@ -470,7 +470,7 @@
     }
   },
   "notification": {
-    "title": "Sonolus Next SEKAI Editor\n版本 {0}"
+    "title": "Chart Preview v{0}\n基于 sonolus-pjsekai-editor 修改 (@NonSpicyBurrito)"
   },
   "player": {
     "started": "开始播放",

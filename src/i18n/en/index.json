@@ -483,7 +483,7 @@
         }
     },
     "notification": {
-        "title": "Sonolus Next SEKAI Editor\nVersion {0}"
+        "title": "Chart Preview v{0}\nBased on sonolus-pjsekai-editor by @NonSpicyBurrito"
     },
     "player": {
         "started": "Started playing",

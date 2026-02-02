@@ -6,6 +6,7 @@ import { brush } from './brush'
 import { eraser } from './eraser'
 import { note } from './note'
 import { paste } from './paste'
+import { preview } from './preview'
 import { select } from './select'
 import { slide } from './slide'
 import { timeScale } from './timeScale'
@@ -23,6 +24,7 @@ export type Tool = {
 }
 
 export const tools = {
+    preview,  // Preview mode (default for preview-only viewer)
     select,
     eraser,
     brush,
@@ -37,7 +39,8 @@ export const tools = {
 
 export type ToolName = keyof typeof tools
 
-export const toolName = ref<ToolName>('select')
+// Default to preview mode (no editing)
+export const toolName = ref<ToolName>('preview')
 
 export const tool = computed(() => tools[toolName.value])
 
@@ -49,3 +52,4 @@ export const switchToolTo = (tool: ToolName) => {
         creating: [],
     }
 }
+
