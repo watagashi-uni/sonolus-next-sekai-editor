@@ -54,7 +54,7 @@ export const loadFromUrl = async (
     try {
         // 1. Load SUS chart file
         onProgress?.('Loading chart...')
-        const susResponse = await fetch(params.sus)
+        const susResponse = await fetch(params.sus, { cache: 'no-store' })
         if (!susResponse.ok) {
             throw new Error(`Failed to load chart: ${susResponse.status}`)
         }
@@ -78,7 +78,7 @@ export const loadFromUrl = async (
         // 5. Load BGM if provided
         if (params.bgm) {
             onProgress?.('Loading audio...')
-            const bgmResponse = await fetch(params.bgm)
+            const bgmResponse = await fetch(params.bgm, { cache: 'no-store' })
             if (!bgmResponse.ok) {
                 console.warn(`Failed to load BGM: ${bgmResponse.status}`)
             } else {

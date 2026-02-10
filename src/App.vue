@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import LevelEditor from './editor/LevelEditor.vue'
 import ModalManager from './modals/ModalManager.vue'
 import { settings } from './settings'
 import { hasUrlParams, loadFromUrl } from './urlLoader'
 
 // Original project info (for info modal)
-const ORIGINAL_REPO = 'https://github.com/NonSpicyBurrito/sonolus-pjsekai-editor'
+const ORIGINAL_REPO = 'https://github.com/Next-SEKAI/sonolus-next-sekai-editor'
 
 // Set locale
 watch(
@@ -25,21 +25,53 @@ const loadError = ref<string | null>(null)
 // Info modal state
 const showInfoModal = ref(false)
 
-// Auto-load from URL on mount
-onMounted(async () => {
-    if (hasUrlParams()) {
-        try {
-            const success = await loadFromUrl((stage) => {
-                loadingMessage.value = stage
-            })
-            if (!success) {
-                loadError.value = 'Failed to load chart from URL'
-            }
-        } catch (error) {
-            loadError.value = error instanceof Error ? error.message : 'Unknown error'
-        }
+// Track current URL for change detection
+const currentUrlSearch = ref(window.location.search)
+
+// Load chart from URL params
+async function loadChart() {
+    if (!hasUrlParams()) {
+        isLoading.value = false
+        return
     }
+    
+    isLoading.value = true
+    loadError.value = null
+    
+    try {
+        const success = await loadFromUrl((stage) => {
+            loadingMessage.value = stage
+        })
+        if (!success) {
+            loadError.value = 'Failed to load chart from URL'
+        }
+    } catch (error) {
+        loadError.value = error instanceof Error ? error.message : 'Unknown error'
+    }
+    
     isLoading.value = false
+}
+
+// Watch for URL changes (same window, different params)
+watch(currentUrlSearch, (newUrl, oldUrl) => {
+    if (newUrl !== oldUrl) {
+        loadChart()
+    }
+})
+
+// Listen for popstate (back/forward navigation)
+function handlePopState() {
+    currentUrlSearch.value = window.location.search
+}
+
+// Auto-load from URL on mount
+onMounted(() => {
+    window.addEventListener('popstate', handlePopState)
+    loadChart()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('popstate', handlePopState)
 })
 </script>
 
