@@ -7,7 +7,7 @@ import LevelEditorToolbarTool from './LevelEditorToolbarTool.vue'
 
 const toolbar = computed<CommandName[][]>(() => [
     ...settings.toolbar,
-    ['fullscreen', 'settings', 'help'],
+    ['fullscreen', 'settings'],
 ])
 
 const activeNames = ref<CommandName[]>([])
@@ -22,14 +22,19 @@ watch(
 
 const activeIndex = ref(-1)
 
+const isExpandable = (index: number) =>
+    index === toolbar.value.length - 1 && (toolbar.value[index]?.length ?? 0) > 1
+
 const onOverMain = (event: PointerEvent, index: number) => {
     if (event.pointerType !== 'mouse') return
+
+    if (!isExpandable(index)) return
 
     activeIndex.value = index
 }
 
 const onClickMain = (index: number, name: CommandName) => {
-    if (activeIndex.value === -1 && toolbar.value[index] && toolbar.value[index].length > 1) {
+    if (activeIndex.value === -1 && isExpandable(index)) {
         activeIndex.value = index
         return
     }
@@ -71,7 +76,7 @@ const onOverBackdrop = (event: PointerEvent) => {
                 @click="onClickMain(i, activeName)"
             />
 
-            <div v-if="activeIndex === i" class="absolute top-0 -translate-y-full">
+            <div v-if="activeIndex === i && isExpandable(i)" class="absolute top-0 -translate-y-full">
                 <LevelEditorToolbarTool
                     v-for="(name, j) in toolbar[i]"
                     :key="j"

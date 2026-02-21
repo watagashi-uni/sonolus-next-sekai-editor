@@ -1,21 +1,16 @@
 import { onMounted, onUnmounted } from 'vue'
 import { modals } from '../../modals'
-import { settings } from '../../settings'
-import { commands, type CommandName } from '../commands'
+import { commands } from '../commands'
 import { currentSidebar } from '../sidebars'
 
 const onKeydown = (event: KeyboardEvent) => {
     if (modals.length) return
     if (currentSidebar.value?.contains(document.activeElement)) return
 
-    for (const [name, key] of Object.entries(settings.keyboardShortcuts) as [
-        CommandName,
-        string | undefined,
-    ][]) {
-        if (key !== event.key) continue
+    if (event.key !== ' ' && event.code !== 'Space') return
 
-        void commands[name].execute()
-    }
+    event.preventDefault()
+    void commands.play.execute()
 }
 
 export const useKeyboardControl = () => {

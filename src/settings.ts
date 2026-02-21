@@ -77,6 +77,23 @@ const defaultNoteSlidePropertiesSchema = Type.Partial(
 
 export type DefaultNoteSlideProperties = Static<typeof defaultNoteSlidePropertiesSchema>
 
+const waveformSchema = Type.Transform(
+    Type.Union([
+        Type.Literal('volume'),
+        Type.Literal('fft'),
+        Type.Literal('off'),
+        Type.Literal('音量'),
+        Type.Literal('快速傅里叶变换'),
+        Type.Literal('关闭'),
+    ]),
+)
+    .Decode((value): 'volume' | 'off' => {
+        if (value === 'off') return 'off'
+
+        return 'volume'
+    })
+    .Encode((value) => value)
+
 const settingsProperties = {
     showSidebar: Type.Boolean({ default: true }),
 
@@ -103,7 +120,7 @@ const settingsProperties = {
 
     autoSaveDelay: number(1, 0, 5),
 
-    waveform: Type.Union([Type.Literal('volume'), Type.Literal('fft'), Type.Literal('off')]),
+    waveform: waveformSchema,
 
     lockScrollX: Type.Boolean({ default: true }),
 
