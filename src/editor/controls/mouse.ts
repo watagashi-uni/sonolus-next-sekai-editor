@@ -4,7 +4,7 @@ import { zoomXOut } from '../commands/zooms/zoomXOut'
 import { zoomYIn } from '../commands/zooms/zoomYIn'
 import { zoomYOut } from '../commands/zooms/zoomYOut'
 import { stopPlayer } from '../player'
-import { switchToolTo, tool, toolName, type ToolName } from '../tools'
+import { tool } from '../tools'
 import { scrollViewXBy, scrollViewYBy, setViewHover, updateViewPointer, view } from '../view'
 import { gesture } from './gestures/gesture'
 import { drag } from './gestures/recognizers/drag'
@@ -22,19 +22,12 @@ const toP = (event: MouseEvent) => ({
     },
 })
 
-let secondarySwitchBack: ToolName | undefined
-
 const mousedown = (event: MouseEvent) => {
     const p = toP(event)
     updateViewPointer(p)
 
     view.scrollingY = undefined
     stopPlayer(false)
-
-    if (!mouseGesture.pointerCount && event.buttons & 2 && !secondarySwitchBack) {
-        secondarySwitchBack = toolName.value
-        switchToolTo(settings.mouseSecondaryTool)
-    }
 
     mouseGesture.start([p])
 
@@ -60,11 +53,6 @@ const mouseup = (event: MouseEvent) => {
     updateViewPointer(p)
 
     mouseGesture.end([p])
-
-    if (!mouseGesture.pointerCount && secondarySwitchBack) {
-        switchToolTo(secondarySwitchBack)
-        secondarySwitchBack = undefined
-    }
 
     event.preventDefault()
 }
